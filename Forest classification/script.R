@@ -341,7 +341,7 @@ testing_class9 <- predict(modelfit_rf_class4, testing_scaled[,-c(21,22,29,39)])
 ############################### Try GBM tune again 
 gbmGrid <- expand.grid(.interaction.depth = seq(7,15, by=2),
                        .n.trees = seq(1000,2000,by=200),
-                       .shrinkage =  c(0.01,0.001))
+                       .shrinkage =  0.01)
 
 t1 <- Sys.time()
 registerDoMC(cores=4)
@@ -380,19 +380,20 @@ write.csv(temp,'testing_class10.csv',row.names=F,quote=F)
 ################ mtry 18 is the best, Accuracy is 0.75623
 
 ################################## Try regularized rf
-
-t1 <- Sys.time()
-registerDoMC(cores=3)
-set.seed(1990)
-#rf_tuneGrid <- expand.grid(.mtry= 18)
-modelfit_rrf<-train(Cover_Type~.,method='RRF',data=training_scaled_sel,
-                          trControl = trainControl(method = "repeatedcv", 
-                                                   repeats=5), 
-                          ntree=1000)
-t2 <- Sys.time()
-t2-t1
-
-testing_class9 <- predict(modelfit_rf_class4, testing_scaled[,-c(21,22,29,39)])
+# 
+# t1 <- Sys.time()
+# registerDoMC(cores=4)
+# set.seed(1990)
+# rf_tuneGrid <- expand.grid(.mtry= 18)
+# modelfit_rrf<-train(Cover_Type~.,method='RRF',data=training_scaled_sel,
+#                           trControl = trainControl(method = "repeatedcv", 
+#                                                    repeats=2),
+# 							tuneGrid = rf_tuneGrid, 					   
+#                           ntree=1000)
+# t2 <- Sys.time()
+# t2-t1
+# 
+# testing_class9 <- predict(modelfit_rf_class4, testing_scaled[,-c(21,22,29,39)])
 
 ####################### Try svm 
 
@@ -455,7 +456,469 @@ modelfit_svm_class3 <- train(Cover_Type~.,method='svmRadial',data=training_scale
                                                       repeats=5), 
                              tuneGrid= tuneGrid_svm)
 
+testing_class15 <- predict(modelfit_svm_class3, testing_scaled[,-c(21,22,29,39)])
+
+temp <- substr(testing_class14,2,2)
+temp <- matrix(temp, nrow = length(temp), ncol = 1)
+temp <- cbind(rownames(testing),temp)
+colnames(temp) <- c('Id','Cover_type')
+write.csv(temp,'testing_class14.csv',row.names=F,quote=F)# Naive bayes, feed with factor variables rather than dummy variables
+############ Accurary 0.72846
+
+########## Tune svm again 
+tuneGrid_svm <- expand.grid(.C = c(0.1,1,10,100),
+                            .sigma = c(0.2,0.4,0.6,0.8))
+t1 <- Sys.time()
+registerDoMC(cores=4)
+set.seed(1990)
+modelfit_svm_class4 <- train(Cover_Type~.,method='svmRadial',data=training_scaled_sel,
+                             trControl = trainControl(method = "repeatedcv", 
+                                                      repeats=2), 
+                             tuneGrid= tuneGrid_svm)
+t2 <- Sys.time()
+t2-t1
+
+testing_class15 <- predict(modelfit_svm_class3, testing_scaled[,-c(21,22,29,39)])
+
+temp <- substr(testing_class15,2,2)
+temp <- matrix(temp, nrow = length(temp), ncol = 1)
+temp <- cbind(rownames(testing),temp)
+colnames(temp) <- c('Id','Cover_type')
+write.csv(temp,'testing_class15.csv',row.names=F,quote=F)# Naive bayes, feed with factor variables rather than dummy variables
+
+
+############################### Try GBM tune again 
+##### interaction.depth from 17-25, n.trees from 2400-4000,
+gbmGrid <- expand.grid(.interaction.depth = seq(17,25, by=2),
+                       .n.trees = seq(2400,4000,by=400),
+                       .shrinkage =  0.01)
+
+t1 <- Sys.time()
+registerDoMC(cores=4)
+set.seed(1990)
+modelfit_gbm_dummy2 <- train(Cover_Type~., data=training_scaled_sel,
+                             method = "gbm",
+                             tuneGrid = gbmGrid,
+                             trControl = trainControl(method = "repeatedcv",  
+                                                      repeats = 2),
+                             ## The gbm() function produces copious amounts
+                             ## of output, so pass in the verbose option
+                             ## to avoid printing a lot to the screen
+                             verbose = F)
+t2 <- Sys.time()
+t2-t1
+
+
+testing_class19 <- predict(modelfit_gbm_dummy2, testing_scaled[,-c(21,22,29,39)])
+
+temp <- substr(testing_class19,2,2)
+temp <- matrix(temp, nrow = length(temp), ncol = 1)
+temp <- cbind(rownames(testing),temp)
+colnames(temp) <- c('Id','Cover_type')
+write.csv(temp,'testing_class19.csv',row.names=F,quote=F)# Naive bayes, feed with factor variables rather than dummy variables
+
+###################### best try 0.76569
+################################# Try rf with deeper trees 
+
+t1 <- Sys.time()
+registerDoMC(cores=4)
+set.seed(1990)
+rf_tuneGrid <- expand.grid(.mtry= 18)
+modelfit_rf_class6<-train(Cover_Type~.,method='rf',data=training_scaled_sel,
+                          trControl = trainControl(method = "repeatedcv", 
+                                                   repeats=20), 
+                          ntree=3000, tuneGrid=rf_tuneGrid)
+t2 <- Sys.time()
+t2-t1
+
+testing_class13 <- predict(modelfit_rf_class6, testing_scaled[,-c(21,22,29,39)])
+
+temp <- substr(testing_class13,2,2)
+temp <- matrix(temp, nrow = length(temp), ncol = 1)
+temp <- cbind(rownames(testing),temp)
+colnames(temp) <- c('Id','Cover_type')
+write.csv(temp,'testing_class13.csv',row.names=F,quote=F)
+
+######################### Best entry 0.75644
+################################# Try rf with more folds 
+
+t1 <- Sys.time()
+registerDoMC(cores=4)
+set.seed(1990)
+rf_tuneGrid <- expand.grid(.mtry= 18)
+modelfit_rf_class7<-train(Cover_Type~.,method='rf',data=training_scaled_sel,
+                          trControl = trainControl(method = "repeatedcv", 
+                                                   repeats=2,
+                                                   number=50), 
+                          ntree=1000, tuneGrid=rf_tuneGrid)
+t2 <- Sys.time()
+t2-t1
+
+testing_class14 <- predict(modelfit_rf_class7, testing_scaled[,-c(21,22,29,39)])
+
+temp <- substr(testing_class14,2,2)
+temp <- matrix(temp, nrow = length(temp), ncol = 1)
+temp <- cbind(rownames(testing),temp)
+colnames(temp) <- c('Id','Cover_type')
+write.csv(temp,'testing_class14.csv',row.names=F,quote=F)# Naive bayes, feed with factor variables rather than dummy variables
+
+################################# Try rf with more folds 
+
+t1 <- Sys.time()
+registerDoMC(cores=4)
+set.seed(1990)
+rf_tuneGrid <- expand.grid(.mtry= 18)
+modelfit_rf_class8<-train(Cover_Type~.,method='rf',data=training_scaled_sel,
+                          trControl = trainControl(method = "repeatedcv", 
+                                                   repeats=2,
+                                                   number=500), 
+                          ntree=1000, tuneGrid=rf_tuneGrid)
+t2 <- Sys.time()
+t2-t1
+
+testing_class16 <- predict(modelfit_rf_class8, testing_scaled[,-c(21,22,29,39)])
+
+temp <- substr(testing_class16,2,2)
+temp <- matrix(temp, nrow = length(temp), ncol = 1)
+temp <- cbind(rownames(testing),temp)
+colnames(temp) <- c('Id','Cover_type')
+write.csv(temp,'testing_class16.csv',row.names=F,quote=F)# Naive bayes, feed with factor variables rather than dummy variables
+
+### try neural networks
+t1 <- Sys.time()
+registerDoMC(cores=4)
+set.seed(1990)
+my.grid <- expand.grid(.decay = c(0.5, 0.1, 0), 
+                       .size = c(5, 6, 7))
+modelfit_nn <- train(Cover_Type~., data = training_scaled_sel,
+                     trControl = trainControl(method = "repeatedcv", 
+                                              repeats=2),
+                      method = "nnet", 
+                     maxit = 1000, 
+                     tuneGrid = my.grid) 
+t2 <- Sys.time()
+t2-t1
+
+testing_class17 <- predict(modelfit_nn, testing_scaled[,-c(21,22,29,39)])
+
+temp <- substr(testing_class17,2,2)
+temp <- matrix(temp, nrow = length(temp), ncol = 1)
+temp <- cbind(rownames(testing),temp)
+colnames(temp) <- c('Id','Cover_type')
+write.csv(temp,'testing_class17.csv',row.names=F,quote=F)# Naive bayes, feed with factor variables rather than dummy variables
+
+# Tune neural net again 
+t1 <- Sys.time()
+registerDoMC(cores=4)
+set.seed(1990)
+my.grid <- expand.grid(.decay = c(0.05, 0.1, 0.2), 
+                       .size = c(1, 3, 10, 15, 20))
+modelfit_nn1 <- train(Cover_Type~., data = training_scaled_sel,
+                     trControl = trainControl(method = "repeatedcv", 
+                                              repeats=2),
+                     method = "nnet", 
+                     maxit = 1000, 
+                     tuneGrid = my.grid) 
+t2 <- Sys.time()
+t2-t1
+
+
+
+##################
+# tuneGrid_svm <- expand.grid(.C = c(0.1,1,10,100),
+#                             .sigma = c(0.2,0.4,0.6,0.8))
+t1 <- Sys.time()
+registerDoMC(cores=4)
+set.seed(1990)
+modelfit_svm_class5 <- train(Cover_Type~.,method='svmPoly',data=training_scaled_sel,
+                             trControl = trainControl(method = "repeatedcv", 
+                                                      repeats=2), 
+                             tuneLength=10)
+t2 <- Sys.time()
+t2-t1
+
+
+# Tune neural net again 
+t1 <- Sys.time()
+registerDoMC(cores=4)
+set.seed(1990)
+my.grid <- expand.grid(.decay = c(0.01,0.001,0.0001), 
+                       .size = c(20,30,40,80,100,200))
+modelfit_nn2 <- train(Cover_Type~., data = training_scaled_sel,
+                      trControl = trainControl(method = "repeatedcv", 
+                                               repeats=2),
+                      method = "nnet", 
+                      maxit = 1000, 
+                      tuneGrid = my.grid) 
+t2 <- Sys.time()
+t2-t1
+
+################# Try rf with deeper trees
+t1 <- Sys.time()
+registerDoMC(cores=4)
+set.seed(1990)
+rf_tuneGrid <- expand.grid(.mtry= 18)
+modelfit_rf_class9<-train(Cover_Type~.,method='rf',data=training_scaled_sel,
+                          trControl = trainControl(method = "none"), 
+                          ntree=10000, 
+                          tuneGrid=rf_tuneGrid)
+t2 <- Sys.time()
+t2-t1
+
+testing_class18 <- predict(modelfit_rf_class9, testing_scaled[,-c(21,22,29,39)])
+
+temp <- substr(testing_class18,2,2)
+temp <- matrix(temp, nrow = length(temp), ncol = 1)
+temp <- cbind(rownames(testing),temp)
+colnames(temp) <- c('Id','Cover_type')
+write.csv(temp,'testing_class18.csv',row.names=F,quote=F)# Naive bayes, feed with factor variables rather than dummy variables
+
+########################################################3
+###### model_averaged_neural nets
+t1 <- Sys.time()
+registerDoMC(cores=4)
+set.seed(1990)
+modelfit_avNNet <- train(Cover_Type~., data = training_scaled_sel,
+                      trControl = trainControl(method = "repeatedcv", 
+                                               repeats=2),
+                      method = "avNNet", 
+                      maxit = 1000, 
+                      tuneLength=10) 
+t2 <- Sys.time()
+t2-t1
+
+#################################################### gbm tune again 
+gbmGrid <- expand.grid(.interaction.depth = seq(30,80, by=10),
+                       .n.trees = seq(5000,15000,by=2000),
+                       .shrinkage =  0.01)
+
+t1 <- Sys.time()
+registerDoMC(cores=4)
+set.seed(1990)
+modelfit_gbm_dummy3 <- train(Cover_Type~., data=training_scaled_sel,
+                             method = "gbm",
+                             tuneGrid = gbmGrid,
+                             trControl = trainControl(method = "repeatedcv",  
+                                                      repeats = 1),
+                             ## The gbm() function produces copious amounts
+                             ## of output, so pass in the verbose option
+                             ## to avoid printing a lot to the screen
+                             verbose = F)
+t2 <- Sys.time()
+t2-t1
+
+testing_class20 <- predict(modelfit_gbm_dummy3, testing_scaled[,-c(21,22,29,39)])
+
+temp <- substr(testing_class20,2,2)
+temp <- matrix(temp, nrow = length(temp), ncol = 1)
+temp <- cbind(rownames(testing),temp)
+colnames(temp) <- c('Id','Cover_type')
+write.csv(temp,'testing_class20.csv',row.names=F,quote=F)# Naive bayes, feed with factor variables rather than dummy variables
+
+##################### Best accuracy 0.77544
+#################### Tune C50 again 
+
+tuneGrid_C50 <- expand.grid(.trials= 100, 
+                            .model= 'rules',
+                            .winnow = FALSE
+                              )
+t1 <- Sys.time()
+registerDoMC(cores=4)
+set.seed(1990)
+modelfit_C50_2 <- train(Cover_Type~.,data=training_scaled_sel,
+                      method = "C5.0", tuneGrid = tuneGrid_C50,
+                      trControl = trainControl(method = 'none'),
+                      control = C5.0Control(earlyStopping = FALSE))
+t2 <- Sys.time()
+t2-t1
+
+testing_class21 <- predict(modelfit_C50_2, testing_scaled[,-c(21,22,29,39)])
+
+temp <- substr(testing_class21,2,2)
+temp <- matrix(temp, nrow = length(temp), ncol = 1)
+temp <- cbind(rownames(testing),temp)
+colnames(temp) <- c('Id','Cover_type')
+write.csv(temp,'testing_class21.csv',row.names=F,quote=F)
+
+############################## Accuracy 0.74165
+
 # Naive bayes, feed with factor variables rather than dummy variables
+
+############ AdaBag
+
+
+############### Conditional Inference Random Forest cforest
+t1 <- Sys.time()
+registerDoMC(cores=4)
+set.seed(1990)
+modelfit_crf <- train(Cover_Type~., data = training_scaled_sel,
+                             trControl = trainControl(method = "repeatedcv", 
+                                                      repeats=1),
+                             method = "cforest",
+                             tuneLength=10) 
+t2 <- Sys.time()
+t2-t1
+
+
+#################### Not good even on training set 
+
+########## extreme learning machine elm
+tuneGrid_elm <- expand.grid(.nhid = seq(1,20,by=2),
+                            .actfun = c('sig',
+                                        'sin',
+                                        'radbas',
+                                        'hardlim',
+                                        'hardlims',
+                                        'satlins',
+                                        'tansig',
+                                        'tribas',
+                                        'poslin',
+                                        'purelin'))
+t1 <- Sys.time()
+registerDoMC(cores=4)
+set.seed(1990)
+modelfit_elm <- train(Cover_Type~., data = training_scaled_sel,
+                      trControl = trainControl(method = "repeatedcv", 
+                                               repeats=1),
+                      method = "elm", tuneGrid=tuneGrid_elm) 
+t2 <- Sys.time()
+t2-t1
+
+
+############### Tune again 
+tuneGrid_elm <- expand.grid(.nhid = seq(30,210,by=20),
+                            .actfun = c('sig',
+                                        'sin',
+                                        'radbas',
+                                        'hardlim',
+                                        'hardlims',
+                                        'satlins',
+                                        'tansig',
+                                        'tribas',
+                                        'poslin',
+                                        'purelin'))
+t1 <- Sys.time()
+registerDoMC(cores=4)
+set.seed(1990)
+modelfit_elm1 <- train(Cover_Type~., data = training_scaled_sel,
+                      trControl = trainControl(method = "repeatedcv", 
+                                               repeats=1),
+                      method = "elm", tuneGrid=tuneGrid_elm) 
+t2 <- Sys.time()
+t2-t1
+
+
+# TUne again
+tuneGrid_elm2 <- expand.grid(.nhid = 2^c(8:12),
+                            .actfun = c('sig',
+                                        'sin',
+                                        'radbas',
+                                        'hardlim',
+                                        'hardlims',
+                                        'satlins',
+                                        'tansig',
+                                        'tribas',
+                                        'poslin',
+                                        'purelin'))
+t1 <- Sys.time()
+registerDoMC(cores=4)
+set.seed(1990)
+modelfit_elm1 <- train(Cover_Type~., data = training_scaled_sel,
+                       trControl = trainControl(method = "repeatedcv", 
+                                                repeats=1),
+                       method = "elm", tuneGrid=tuneGrid_elm) 
+t2 <- Sys.time()
+t2-t1
+
+####################################### No good
+
+########### Random Forest by Randomization  extraTrees
+t1 <- Sys.time()
+#registerDoMC(cores=4)
+set.seed(1990)
+modelfit_extratrees <- train(Cover_Type~., data = training_scaled_sel,
+                         trControl = trainControl(method = "repeatedcv", 
+                                                  repeats=1),
+                         method = "extraTrees", 
+                         ntree = 1000, 
+                         tuneLength=10) 
+t2 <- Sys.time()
+t2-t1
+
+##########  Boosted Generalized Additive Model  gamboost
+training_trans_sel <- training_trans[,-c(21,22,29,39)]
+t1 <- Sys.time()
+registerDoMC(cores=4)
+set.seed(1990)
+modelfit_gamboost <- train(Cover_Type~., data = training_trans_sel,
+                             trControl = trainControl(method = "repeatedcv", 
+                                                      repeats=1),
+                             method = "gamboost") 
+t2 <- Sys.time()
+t2-t1
+
+########################################## not working
+
+
+########## glmnet  glmnet
+t1 <- Sys.time()
+registerDoMC(cores=4)
+set.seed(1990)
+modelfit_glmnet <- train(Cover_Type~., data = training_scaled_sel,
+                           trControl = trainControl(method = "repeatedcv", 
+                                                    repeats=1),
+                           method = "glmnet", family= 'multinomial') 
+t2 <- Sys.time()
+t2-t1
+
+
+
+
+
+###########  Linear Discriminant Analysis  lda2
+
+###########   Boosted Logistic Regression  LogitBoost
+
+############3   Regularized Random Forest  RRF
+
+
+t1 <- Sys.time()
+registerDoMC(cores=4)
+set.seed(1990)
+rf_tuneGrid <- expand.grid(.mtry= 18)
+modelfit_rrf<-train(Cover_Type~.,method='RRF',data=training_scaled_sel,
+                          trControl = trainControl(method = 'none'),
+  						tuneGrid = rf_tuneGrid, 					   
+                          ntree=1000)
+t2 <- Sys.time()
+t2-t1
+
+################################# Too too slow
+
+
+
+############################################## Try average the prediction probablity 
+########################### of rf and gbm 
+
+pred1 <- predict(modelfit_rf_class6, testing_scaled[,-c(21,22,29,39)], type='prob')
+pred2 <- predict(modelfit_gbm_dummy3, testing_scaled[,-c(21,22,29,39)], type='prob')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Try rpart with factor variables
 
