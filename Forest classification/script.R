@@ -1139,6 +1139,18 @@ colnames(temp) <- c('Id','Cover_type')
 write.csv(temp,'testing_class56.csv',row.names=F,quote=F)
 ############## Accuracy 0.77828
 
+########## gbm extratrees
+testing_class63 <- testing_class48
+testing_class63[testing_class26=='C3'] <- 'C3'
+#testing_class63[testing_class26=='C5'] <- 'C5'
+
+temp <- substr(testing_class63,2,2)
+temp <- matrix(temp, nrow = length(temp), ncol = 1)
+temp <- cbind(rownames(testing),temp)
+colnames(temp) <- c('Id','Cover_type')
+write.csv(temp,'testing_class63.csv',row.names=F,quote=F)
+###### accuracy 0.78100
+
 ############# sub C1 and C2 from extratrees
 testing_class57 <- testing_class26
 testing_class57[testing_class48=='C2'] <- 'C2'
@@ -1174,6 +1186,30 @@ colnames(temp) <- c('Id','Cover_type')
 write.csv(temp,'testing_class59.csv',row.names=F,quote=F)
 ############## Accuracy 0.80768
 
+
+testing_class69 <- testing_ensembel
+testing_class69[testing_class48=='C2'] <- 'C2'
+testing_class69[testing_class48=='C1'] <- 'C1'
+
+temp <- substr(testing_class69,2,2)
+temp <- matrix(temp, nrow = length(temp), ncol = 1)
+temp <- cbind(rownames(testing),temp)
+colnames(temp) <- c('Id','Cover_type')
+write.csv(temp,'testing_class69.csv',row.names=F,quote=F)
+#########   0.79492
+
+testing_class70 <- testing_ensembel
+testing_class70[testing_class58=='C2'] <- 'C2'
+testing_class70[testing_class58=='C1'] <- 'C1'
+
+temp <- substr(testing_class70,2,2)
+temp <- matrix(temp, nrow = length(temp), ncol = 1)
+temp <- cbind(rownames(testing),temp)
+colnames(temp) <- c('Id','Cover_type')
+write.csv(temp,'testing_class70.csv',row.names=F,quote=F)
+########### 0.80424
+
+
 ################ Try use vote class54, class57, class43
 vote14 <- as.matrix(data.frame( vote1 = testing_class57, vote2 = testing_class54, vote3 = testing_class43))
 rownames(vote14) <- rownames(testing)
@@ -1187,7 +1223,7 @@ vote15[,1] <- rownames(vote14)
 vote15[,2] <- substr(temp,2,2)
 colnames(vote15) <- c('Id','Cover_type')
 write.csv(vote15, 'testing_class60.csv', quote = F, row.names=F)
-
+############# accuracy 0.79408
 
 
 
@@ -1352,6 +1388,44 @@ colnames(temp) <- c('Id','Cover_type')
 write.csv(temp,'testing_class33.csv',row.names=F,quote=F)
 ############################## 0.78385
 
+################### use extra trees to train ensembel model
+extratreesGrid <- expand.grid(.mtry=c(1,4,7,10,14),
+                              .numRandomCuts=1)
+t1 <- Sys.time()
+#registerDoMC(cores=4)
+set.seed(1990)
+modelfit_extratrees_ensem <- train(obs~., data = ensemble1,
+                             trControl = trainControl(method = 'repeatedcv',
+                                                      repeats=1),
+                             method = "extraTrees", 
+                             ntree = 3000, 
+                             tuneGrid = extratreesGrid) 
+t2 <- Sys.time()
+t2-t1
+
+testing_class64 <- predict(modelfit_extratrees_ensem, ensembel1_test_input)
+temp <- substr(testing_class64,2,2)
+temp <- matrix(temp, nrow = length(temp), ncol = 1)
+temp <- cbind(rownames(testing_scaled_sel),temp)
+colnames(temp) <- c('Id','Cover_type')
+write.csv(temp,'testing_class64.csv',row.names=F,quote=F)
+################## accuracy 0.78050
+
+############# 
+testing_class65 <- testing_class64
+testing_class65[ensembel1_test=='C1'] <- 'C1'
+temp <- substr(testing_class65,2,2)
+temp <- matrix(temp, nrow = length(temp), ncol = 1)
+temp <- cbind(rownames(testing),temp)
+colnames(temp) <- c('Id','Cover_type')
+write.csv(temp,'testing_class65.csv',row.names=F,quote=F)
+########### Accuracy 0.77562
+
+
+
+
+
+
 ############ use gbm to train the ensembel prob
 gbmGrid <- expand.grid(.interaction.depth = c(1:5),
                        .n.trees = c(100, 500, 1000, 5000),
@@ -1497,6 +1571,41 @@ temp <- cbind(rownames(testing),temp)
 colnames(temp) <- c('Id','Cover_type')
 write.csv(temp,'testing_class43.csv',row.names=F,quote=F)
 ########### Accuracy 0.79190
+
+####################### just use rf_type4, rf_type5
+########### 0.7935
+############ take C2 from et
+testing_class66 <- testing_class43
+testing_class66[testing_class48=='C2'] <- 'C2'
+
+temp <- substr(testing_class66,2,2)
+temp <- matrix(temp, nrow = length(temp), ncol = 1)
+temp <- cbind(rownames(testing),temp)
+colnames(temp) <- c('Id','Cover_type')
+write.csv(temp,'testing_class66.csv',row.names=F,quote=F)
+################# Accuracy  0.80484
+
+############ take C2 from rf testing_class13
+testing_class67 <- testing_class43
+testing_class67[testing_class13=='C2'] <- 'C2'
+
+temp <- substr(testing_class67,2,2)
+temp <- matrix(temp, nrow = length(temp), ncol = 1)
+temp <- cbind(rownames(testing),temp)
+colnames(temp) <- c('Id','Cover_type')
+write.csv(temp,'testing_class67.csv',row.names=F,quote=F)
+########### 0.79429
+
+####### take C1 from et, take C2 from ensemble1_test
+testing_class68 <- testing_class43
+testing_class68[testing_class48=='C1'] <- 'C1'
+testing_class68[ensembel1_test=='C2'] <- 'C2'
+
+temp <- substr(testing_class68,2,2)
+temp <- matrix(temp, nrow = length(temp), ncol = 1)
+temp <- cbind(rownames(testing),temp)
+colnames(temp) <- c('Id','Cover_type')
+write.csv(temp,'testing_class68.csv',row.names=F,quote=F)
 
 ################## Try gbm this time 
 gbmGrid <- expand.grid(.interaction.depth = c(1:5),
@@ -1654,6 +1763,26 @@ temp <- cbind(rownames(testing),temp)
 colnames(temp) <- c('Id','Cover_type')
 write.csv(temp,'testing_class54.csv',row.names=F,quote=F)
 ############# Accuracy  0.79138
+
+################ testing_class54, testing_class43
+testing_class61 <- testing_class43
+testing_class61[testing_class54=='C1'] <- 'C1'
+temp <- substr(testing_class61,2,2)
+temp <- matrix(temp, nrow = length(temp), ncol = 1)
+temp <- cbind(rownames(testing),temp)
+colnames(temp) <- c('Id','Cover_type')
+write.csv(temp,'testing_class61.csv',row.names=F,quote=F)
+################# accuracy 0.78936
+
+testing_class62 <- testing_class54
+testing_class62[testing_class43=='C2'] <- 'C2'
+
+temp <- substr(testing_class62,2,2)
+temp <- matrix(temp, nrow = length(temp), ncol = 1)
+temp <- cbind(rownames(testing),temp)
+colnames(temp) <- c('Id','Cover_type')
+write.csv(temp,'testing_class62.csv',row.names=F,quote=F)
+################# Accuracy 0.79590
 
 
 
