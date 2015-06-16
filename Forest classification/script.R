@@ -1209,6 +1209,49 @@ colnames(temp) <- c('Id','Cover_type')
 write.csv(temp,'testing_class70.csv',row.names=F,quote=F)
 ########### 0.80424
 
+####### take C1 from extratrees, C2 from ensembel1_test
+testing_class71 <- testing_class43
+testing_class71[testing_class48=='C1'] <- 'C1'
+testing_class71[testing_class48=='C2'] <- 'C2'
+temp <- substr(testing_class71,2,2)
+temp <- matrix(temp, nrow = length(temp), ncol = 1)
+temp <- cbind(rownames(testing),temp)
+colnames(temp) <- c('Id','Cover_type')
+write.csv(temp,'testing_class71.csv',row.names=F,quote=F)
+######## accuracy 0.80470
+
+
+############# try vote using class48, class26, class43, testing_ensembel, ensembel1_test, testing_class59
+vote16 <- as.matrix(data.frame( vote1 = testing_class59, vote2 = testing_class48, vote3 = testing_class26,
+                                vote4 = testing_ensembel, vote5 = ensembel1_test, vote6 = testing_class59))
+rownames(vote16) <- rownames(testing)
+temp1 <- sapply(1:nrow(vote16), function(i) {
+  uniq <- sort(unique(vote16[i,]))
+  temp <- table(vote16[i,])
+  uniq[which.max(temp)]
+})
+vote17<- matrix(nrow=nrow(vote16), ncol=2)
+vote17[,1] <- rownames(vote16)
+vote17[,2] <- substr(temp1,2,2)
+colnames(vote17) <- c('Id','Cover_type')
+write.csv(vote17, 'testing_class72.csv', quote = F, row.names=F)
+############### accuracy 0.80686
+
+vote16 <- as.matrix(data.frame( vote1 = testing_class59, vote2 = testing_class48, vote3 = testing_class48,
+                                vote5 = ensembel1_test, vote6 = testing_class59))
+rownames(vote16) <- rownames(testing)
+temp1 <- sapply(1:nrow(vote16), function(i) {
+  uniq <- sort(unique(vote16[i,]))
+  temp <- table(vote16[i,])
+  uniq[which.max(temp)]
+})
+vote17<- matrix(nrow=nrow(vote16), ncol=2)
+vote17[,1] <- rownames(vote16)
+vote17[,2] <- substr(temp1,2,2)
+colnames(vote17) <- c('Id','Cover_type')
+write.csv(vote17, 'testing_class72.csv', quote = F, row.names=F)
+
+
 
 ################ Try use vote class54, class57, class43
 vote14 <- as.matrix(data.frame( vote1 = testing_class57, vote2 = testing_class54, vote3 = testing_class43))
